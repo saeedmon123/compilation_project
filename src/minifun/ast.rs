@@ -1,10 +1,17 @@
+use crate::minifun::types::Type;
+
 #[derive(Debug, Clone)]
 pub enum Term {
     Int(i32),
     Bool(bool),
     Var(String),
 
-    Fun(String, Box<Term>),
+    Fun {
+        param: String,
+        param_type: Type,
+        body: Box<Term>,
+    },
+
     App(Box<Term>, Box<Term>),
 
     BinOp(Box<Term>, BinOp, Box<Term>),
@@ -17,6 +24,8 @@ pub enum Term {
     LetFun {
         name: String,
         param: String,
+        param_type: Type,
+        return_type: Type,
         body: Box<Term>,
         in_term: Box<Term>,
     },
