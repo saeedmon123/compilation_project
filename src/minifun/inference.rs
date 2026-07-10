@@ -138,10 +138,7 @@ pub fn gener(env: &TypeEnvironment, ty: &MonoType) -> PolyType {
     let env_vars = free_type_vars_env(env);
     let ty_vars = free_type_vars_mono(ty);
 
-    let vars = ty_vars
-        .difference(&env_vars)
-        .cloned()
-        .collect::<Vec<_>>();
+    let vars = ty_vars.difference(&env_vars).cloned().collect::<Vec<_>>();
 
     PolyType {
         vars,
@@ -219,8 +216,7 @@ pub fn infer(
                 let s3 = unify(&apply_subst_mono(&s2, &t1), &MonoType::Int)?;
                 let s4 = unify(&apply_subst_mono(&s3, &t2), &MonoType::Int)?;
 
-                let subst =
-                    compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
+                let subst = compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
 
                 Ok((subst, MonoType::Int))
             }
@@ -234,8 +230,7 @@ pub fn infer(
                 let s3 = unify(&apply_subst_mono(&s2, &t1), &MonoType::Bool)?;
                 let s4 = unify(&apply_subst_mono(&s3, &t2), &MonoType::Bool)?;
 
-                let subst =
-                    compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
+                let subst = compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
 
                 Ok((subst, MonoType::Bool))
             }
@@ -249,8 +244,7 @@ pub fn infer(
                 let s3 = unify(&apply_subst_mono(&s2, &t1), &MonoType::Int)?;
                 let s4 = unify(&apply_subst_mono(&s3, &t2), &MonoType::Int)?;
 
-                let subst =
-                    compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
+                let subst = compose_subst(&s4, &compose_subst(&s3, &compose_subst(&s2, &s1)));
 
                 Ok((subst, MonoType::Bool))
             }
@@ -358,10 +352,7 @@ pub fn infer(
 
             let (s1, inferred_body_type) = infer(&env1, body, type_gen)?;
 
-            let s2 = unify(
-                &apply_subst_mono(&s1, &result_type),
-                &inferred_body_type,
-            )?;
+            let s2 = unify(&apply_subst_mono(&s1, &result_type), &inferred_body_type)?;
 
             let subst_fun = compose_subst(&s2, &s1);
 

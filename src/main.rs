@@ -1,37 +1,65 @@
-mod miniimp;
 mod minifun;
+mod miniimp;
 
-use minifun::ast::{BinOp, Term};
-use minifun::inference::typecheck;
-use minifun::types::Type;
+use miniimp::ast::{AExpr, BExpr, Command, Program};
 
-fn main() {
-    let term = Term::Let(
-        "id".to_string(),
-        Box::new(Term::Fun {
-            param: "x".to_string(),
-            param_type: Type::Int,
-            body: Box::new(Term::Var("x".to_string())),
-        }),
-        Box::new(Term::App(
-            Box::new(Term::Var("id".to_string())),
-            Box::new(Term::Int(5)),
-        )),
-    );
+use miniimp::cfg::program_to_cfg;
 
-    match typecheck(&term) {
-        Ok(ty) => println!("Type inferred successfully: {:?}", ty),
-        Err(e) => println!("Type error: {}", e),
-    }
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /*
+        MiniImp test program:
 
-    let bad_term = Term::BinOp(
-        Box::new(Term::Bool(true)),
-        BinOp::Add,
-        Box::new(Term::Int(3)),
-    );
+        y := 0;
 
-    match typecheck(&bad_term) {
-        Ok(ty) => println!("Type inferred successfully: {:?}", ty),
-        Err(e) => println!("Type error: {}", e),
-    }
+        while y < x do
+            if y < 5 then
+                y := y + 1
+            else
+                y := y + 2
+    */
+
+    let program = Program {
+        input: "x".to_string(),
+        output: "y".to_string(),
+
+        body: Command::Seq(
+            Box::new(Command::Assign("y".to_string(), AExpr::Int(0))),
+            Box::new(Command::While(
+                BExpr::Less(
+                    Box::new(AExpr::Var("y".to_string())),
+                    Box::new(AExpr::Var("x".to_string())),
+                ),
+                Box::new(Command::If(
+                    BExpr::Less(
+                        Box::new(AExpr::Var("y".to_string())),
+                        Box::new(AExpr::Int(5)),
+                    ),
+                    Box::new(Command::Assign(
+                        "y".to_string(),
+                        AExpr::Add(
+                            Box::new(AExpr::Var("y".to_string())),
+                            Box::new(AExpr::Int(1)),
+                        ),
+                    )),
+                    Box::new(Command::Assign(
+                        "y".to_string(),
+                        AExpr::Add(
+                            Box::new(AExpr::Var("y".to_string())),
+                            Box::new(AExpr::Int(2)),
+                        ),
+                    )),
+                )),
+            )),
+        ),
+    };
+
+    let cfg = program_to_cfg(&program);
+
+    println!("{}", cfg);
+
+    std::fs::write("cfg.dot", cfg.to_dot())?;
+
+    println!("The CFG was written to cfg.dot");
+
+    Ok(())
 }

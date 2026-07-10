@@ -12,15 +12,15 @@ pub fn eval(term: &Term, env: &mut Environment) -> Result<Value, String> {
             .cloned()
             .ok_or_else(|| format!("Runtime error: variable '{}' is undefined", name)),
 
-       Term::Fun {
-                param,
-                param_type: _,
-                body,
-            } => Ok(Value::Closure {
-                param: param.clone(),
-                body: body.clone(),
-                env: env.clone(),
-            }),
+        Term::Fun {
+            param,
+            param_type: _,
+            body,
+        } => Ok(Value::Closure {
+            param: param.clone(),
+            body: body.clone(),
+            env: env.clone(),
+        }),
 
         Term::App(function_term, argument_term) => {
             let function_value = eval(function_term, env)?;
@@ -94,26 +94,26 @@ pub fn eval(term: &Term, env: &mut Environment) -> Result<Value, String> {
             eval(body_term, &mut new_env)
         }
 
-    Term::LetFun {
-    name,
-    param,
-    param_type: _,
-    return_type: _,
-    body,
-    in_term,
-} => {
-    let recursive_closure = Value::RecursiveClosure {
-        name: name.clone(),
-        param: param.clone(),
-        body: body.clone(),
-        env: env.clone(),
-    };
+        Term::LetFun {
+            name,
+            param,
+            param_type: _,
+            return_type: _,
+            body,
+            in_term,
+        } => {
+            let recursive_closure = Value::RecursiveClosure {
+                name: name.clone(),
+                param: param.clone(),
+                body: body.clone(),
+                env: env.clone(),
+            };
 
-    let mut new_env = env.clone();
-    new_env.insert(name.clone(), recursive_closure);
+            let mut new_env = env.clone();
+            new_env.insert(name.clone(), recursive_closure);
 
-    eval(in_term, &mut new_env)
-}
+            eval(in_term, &mut new_env)
+        }
     }
 }
 

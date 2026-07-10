@@ -22,10 +22,7 @@ pub fn typecheck(term: &Term, env: &mut TypeEnvironment) -> Result<Type, String>
 
             let body_type = typecheck(body, &mut new_env)?;
 
-            Ok(Type::Fun(
-                Box::new(param_type.clone()),
-                Box::new(body_type),
-            ))
+            Ok(Type::Fun(Box::new(param_type.clone()), Box::new(body_type)))
         }
 
         Term::App(function_term, argument_term) => {
@@ -111,10 +108,8 @@ pub fn typecheck(term: &Term, env: &mut TypeEnvironment) -> Result<Type, String>
             body,
             in_term,
         } => {
-            let function_type = Type::Fun(
-                Box::new(param_type.clone()),
-                Box::new(return_type.clone()),
-            );
+            let function_type =
+                Type::Fun(Box::new(param_type.clone()), Box::new(return_type.clone()));
 
             let mut function_env = env.clone();
             function_env.insert(name.clone(), function_type.clone());

@@ -7,17 +7,11 @@ pub fn eval_aexpr(expr: &AExpr, memory: &Memory) -> Result<i32, String> {
 
         AExpr::Var(name) => memory.get(name),
 
-        AExpr::Add(left, right) => {
-            Ok(eval_aexpr(left, memory)? + eval_aexpr(right, memory)?)
-        }
+        AExpr::Add(left, right) => Ok(eval_aexpr(left, memory)? + eval_aexpr(right, memory)?),
 
-        AExpr::Sub(left, right) => {
-            Ok(eval_aexpr(left, memory)? - eval_aexpr(right, memory)?)
-        }
+        AExpr::Sub(left, right) => Ok(eval_aexpr(left, memory)? - eval_aexpr(right, memory)?),
 
-        AExpr::Mul(left, right) => {
-            Ok(eval_aexpr(left, memory)? * eval_aexpr(right, memory)?)
-        }
+        AExpr::Mul(left, right) => Ok(eval_aexpr(left, memory)? * eval_aexpr(right, memory)?),
     }
 }
 
@@ -27,17 +21,11 @@ pub fn eval_bexpr(expr: &BExpr, memory: &Memory) -> Result<bool, String> {
 
         BExpr::False => Ok(false),
 
-        BExpr::And(left, right) => {
-            Ok(eval_bexpr(left, memory)? && eval_bexpr(right, memory)?)
-        }
+        BExpr::And(left, right) => Ok(eval_bexpr(left, memory)? && eval_bexpr(right, memory)?),
 
-        BExpr::Not(value) => {
-            Ok(!eval_bexpr(value, memory)?)
-        }
+        BExpr::Not(value) => Ok(!eval_bexpr(value, memory)?),
 
-        BExpr::Less(left, right) => {
-            Ok(eval_aexpr(left, memory)? < eval_aexpr(right, memory)?)
-        }
+        BExpr::Less(left, right) => Ok(eval_aexpr(left, memory)? < eval_aexpr(right, memory)?),
     }
 }
 
