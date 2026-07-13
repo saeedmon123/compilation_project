@@ -5,6 +5,10 @@ use miniimp::ast::{AExpr, BExpr, Command, Program};
 
 use miniimp::cfg::program_to_cfg;
 
+use miniimp::dataflow::{
+    defined_variables_analysis, live_variables_analysis, reaching_definitions_analysis,
+};
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     /*
         MiniImp test program:
@@ -55,11 +59,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cfg = program_to_cfg(&program);
 
-    println!("{}", cfg);
+    let defined = defined_variables_analysis(&cfg);
+
+    let live = live_variables_analysis(&cfg);
+
+    let reaching = reaching_definitions_analysis(&cfg);
+
+    println!("Original CFG:\n{}", cfg);
+
+    println!("\nDefined variables analysis:\n{}", defined);
+
+    println!("\nLive variables analysis:\n{}", live);
+
+    println!("\nReaching definitions analysis:\n{}", reaching);
 
     std::fs::write("cfg.dot", cfg.to_dot())?;
 
-    println!("The CFG was written to cfg.dot");
+    std::fs::write("cfg_defined.dot", defined.to_dot())?;
+
+    std::fs::write("cfg_live.dot", live.to_dot())?;
+
+    std::fs::write("cfg_reaching.dot", reaching.to_dot())?;
+
+    println!("\nDOT files written:");
+    println!("- cfg.dot");
+    println!("- cfg_defined.dot");
+    println!("- cfg_live.dot");
+    println!("- cfg_reaching.dot");
 
     Ok(())
 }

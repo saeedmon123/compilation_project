@@ -21,6 +21,23 @@ pub struct BasicBlock {
 }
 
 #[derive(Debug, Clone)]
+pub struct AnnotatedControlFlowGraph<A> {
+    pub input: String,
+    pub output: String,
+    pub entry: BlockId,
+    pub exit: BlockId,
+    blocks: Vec<AnnotatedBasicBlock<A>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct AnnotatedBasicBlock<A> {
+    pub id: BlockId,
+    pub statement: SimpleStatement,
+    pub outgoing: OutgoingEdges,
+    pub annotation: A,
+}
+
+#[derive(Debug, Clone)]
 pub enum SimpleStatement {
     Skip,
     Assign(String, AExpr),
@@ -81,6 +98,30 @@ impl ControlFlowGraph {
             .collect()
     }
 
+    pub fn annotate_with<A, F>(&self, mut annotation_for: F) -> AnnotatedControlFlowGraph<A>
+    where
+        F: FnMut(&BasicBlock) -> A,
+    {
+        let blocks = self
+            .blocks
+            .iter()
+            .map(|block| AnnotatedBasicBlock {
+                id: block.id,
+                statement: block.statement.clone(),
+                outgoing: block.outgoing.clone(),
+                annotation: annotation_for(block),
+            })
+            .collect();
+
+        AnnotatedControlFlowGraph {
+            input: self.input.clone(),
+            output: self.output.clone(),
+            entry: self.entry,
+            exit: self.exit,
+            blocks,
+        }
+    }
+
     pub fn to_dot(&self) -> String {
         let mut dot = String::from("digraph CFG {\n");
 
@@ -90,11 +131,11 @@ impl ControlFlowGraph {
             let mut label = format!("B{}: {}", block.id, block.statement);
 
             if block.id == self.entry {
-                label.push_str("\\n(entry)");
+                label.push_str("\n(entry)");
             }
 
             if block.id == self.exit {
-                label.push_str("\\n(exit)");
+                label.push_str("\n(exit)");
             }
 
             dot.push_str(&format!(
@@ -129,6 +170,124 @@ impl ControlFlowGraph {
         dot.push_str("}\n");
 
         dot
+    }
+}
+
+impl<A> AnnotatedControlFlowGraph<A> {
+    pub fn blocks(&self) -> &[AnnotatedBasicBlock<A>] {
+        &self.blocks
+    }
+
+    pub fn block(&self, id: BlockId) -> Option<&AnnotatedBasicBlock<A>> {
+        self.blocks.get(id)
+    }
+
+    pub fn successors(&self, id: BlockId) -> Vec<BlockId> {
+        match self.block(id).map(|block| &block.outgoing) {
+            Some(OutgoingEdges::End) | None => Vec::new(),
+
+            Some(OutgoingEdges::Goto(next)) => {
+                vec![*next]
+            }
+
+            Some(OutgoingEdges::Branch { on_true, on_false }) => {
+                vec![*on_true, *on_false]
+            }
+        }
+    }
+
+    pub fn predecessors(&self, id: BlockId) -> Vec<BlockId> {
+        self.blocks
+            .iter()
+            .filter(|block| self.successors(block.id).contains(&id))
+            .map(|block| block.id)
+            .collect()
+    }
+}
+
+impl<A: fmt::Display> AnnotatedControlFlowGraph<A> {
+    pub fn to_dot(&self) -> String {
+        let mut dot = String::from("digraph CFG {\n");
+
+        dot.push_str("  node [shape=box];\n");
+
+        for block in &self.blocks {
+            let mut label = format!("B{}: {}\n{}", block.id, block.statement, block.annotation);
+
+            if block.id == self.entry {
+                label.push_str("\n(entry)");
+            }
+
+            if block.id == self.exit {
+                label.push_str("\n(exit)");
+            }
+
+            dot.push_str(&format!(
+                "  B{} [label=\"{}\"];\n",
+                block.id,
+                escape_dot_label(&label)
+            ));
+        }
+
+        for block in &self.blocks {
+            match block.outgoing {
+                OutgoingEdges::End => {}
+
+                OutgoingEdges::Goto(next) => {
+                    dot.push_str(&format!("  B{} -> B{};\n", block.id, next));
+                }
+
+                OutgoingEdges::Branch { on_true, on_false } => {
+                    dot.push_str(&format!(
+                        "  B{} -> B{} [label=\"true\"];\n",
+                        block.id, on_true
+                    ));
+
+                    dot.push_str(&format!(
+                        "  B{} -> B{} [label=\"false\"];\n",
+                        block.id, on_false
+                    ));
+                }
+            }
+        }
+
+        dot.push_str("}\n");
+
+        dot
+    }
+}
+
+impl<A: fmt::Display> fmt::Display for AnnotatedControlFlowGraph<A> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(
+            f,
+            "CFG(input: {}, output: {}, entry: B{}, exit: B{})",
+            self.input, self.output, self.entry, self.exit
+        )?;
+
+        for block in &self.blocks {
+            writeln!(f, "B{}: {}", block.id, block.statement)?;
+
+            for line in block.annotation.to_string().lines() {
+                writeln!(f, "    {}", line)?;
+            }
+
+            match block.outgoing {
+                OutgoingEdges::End => {
+                    writeln!(f, "    -> end")?;
+                }
+
+                OutgoingEdges::Goto(next) => {
+                    writeln!(f, "    -> B{}", next)?;
+                }
+
+                OutgoingEdges::Branch { on_true, on_false } => {
+                    writeln!(f, "    -> true: B{}, false: B{}", on_true, on_false)?;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -189,6 +348,10 @@ impl CfgBuilder {
             }
 
             Command::While(condition, body) => {
+                /*
+                 * Reserve the guard block first so that the body
+                 * can create a back-edge to it.
+                 */
                 let guard_id = self.add_block(
                     SimpleStatement::Guard(condition.clone()),
                     OutgoingEdges::End,
@@ -308,7 +471,9 @@ impl fmt::Display for ControlFlowGraph {
 }
 
 fn escape_dot_label(text: &str) -> String {
-    text.replace('\\', "\\\\").replace('"', "\\\"")
+    text.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
 }
 
 #[cfg(test)]
@@ -363,7 +528,6 @@ mod tests {
 
         let guard = cfg.entry;
         let successors = cfg.successors(guard);
-
         let body = successors[0];
 
         assert_eq!(cfg.successors(body), vec![guard]);
