@@ -72,6 +72,10 @@ impl ControlFlowGraph {
         &self.blocks
     }
 
+    pub fn blocks_mut(&mut self) -> &mut [BasicBlock] {
+        &mut self.blocks
+    }
+
     pub fn block(&self, id: BlockId) -> Option<&BasicBlock> {
         self.blocks.get(id)
     }
