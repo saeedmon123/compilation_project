@@ -371,11 +371,10 @@ pub fn infer(
         }
     }
 }
-pub fn typecheck(term: &Term) -> Result<MonoType, String> {
-    let env = TypeEnvironment::new();
+pub fn typecheck(term: &Term, env: &mut TypeEnvironment) -> Result<MonoType, String> {
     let mut type_gen = TypeVarGenerator::new();
 
-    let (subst, ty) = infer(&env, term, &mut type_gen)?;
+    let (subst, ty) = infer(env, term, &mut type_gen)?;
 
     Ok(apply_subst_mono(&subst, &ty))
 }
