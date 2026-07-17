@@ -964,27 +964,7 @@ The project is working correctly when all of the following conditions are satisf
 
 ---
 
-## 22. AI Usage Statement
-
-During the development of this project, AI-based tools were used as supplementary aids for selected implementation and documentation tasks.
-
-AI assistance was used for:
-
-- Generating initial code templates and portions of auxiliary components, including parts of the MiniImp and MiniFun lexer and parser implementations.
-- Suggesting Rust syntax, error-handling approaches, and standard-library usage.
-- Reviewing code organization and suggesting improvements to readability and modularity.
-- Assisting with the organization, wording, and formatting of the project report and README documentation.
-- Suggesting test cases for lexical analysis, parsing, operator precedence, parentheses, evaluation, type checking, data-flow analysis, optimizations, and LLVM generation.
-
-All AI-generated suggestions were reviewed, adapted, compiled, tested, and verified before being incorporated into the final implementation.
-
-The final design decisions, implementation choices, integration work, debugging activities, and validation of correctness were performed by the student based on the course material and project requirements.
-
-The student remains responsible for understanding, correctness, and the final content of the submitted implementation and documentation.
-
----
-
-## 23. Final Notes
+## 22. Final Notes
 
 The MiniImp and MiniFun parsers were intentionally implemented after the main eight fragments because the remaining compiler components operate on abstract syntax trees and could therefore be developed and tested using manually constructed AST values.
 
